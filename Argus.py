@@ -98,7 +98,7 @@ def monitor_servers():
                 state = 'unknown'
             transcode = session.transcodeSession
             video_decision = transcode.videoDecision if transcode else 'Direct Play'
-            ip_address = session.session.location.ip
+            ip_address = session.players[0].address if session.players else 'unknown'
             media = session.nowPlaying[0]
             poster_url = plex.transcodeImageUrl(media.thumb, width=200)
             data.append({
