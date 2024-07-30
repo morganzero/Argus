@@ -7,15 +7,15 @@ from flask import Flask, jsonify, render_template
 app = Flask(__name__)
 
 CONFIG_FILE = 'config.json'
-URL_TOKEN_FILE = 'urls_and_tokens.json'
+PLEX_USERS_FILE = 'plex_users.json'
 
 def load_config():
     with open(CONFIG_FILE, 'r') as file:
         return json.load(file)
 
-def save_urls_and_tokens(data):
-    with open(URL_TOKEN_FILE, 'w') as file:
-        json.dump(data, file)
+def save_plex_users(data):
+    with open(PLEX_USERS_FILE, 'w') as file:
+        json.dump(data, file, indent=4)
 
 config = load_config()
 
@@ -51,7 +51,7 @@ def fetch_plex_servers():
                             url, token = extract_url_token(pref_path, node['ip'])
                             servers.append({'name': node['name'], 'url': url, 'token': token})
         else:
-            ssh = ssh_connect(node['ip'], node['port'], config['ssh_user'])
+            ssh = ssh_connect(node['ip'], node['port'], config['SSH_USER'])
             preferences_files = fetch_preferences_via_ssh(ssh, node['paths'])
             for pref_file in preferences_files:
                 local_file = os.path.join("/tmp", os.path.basename(pref_file))
@@ -61,7 +61,7 @@ def fetch_plex_servers():
                 url, token = extract_url_token(local_file, node['ip'])
                 servers.append({'name': node['name'], 'url': url, 'token': token})
             ssh.close()
-    save_urls_and_tokens(servers)
+    save_plex_users(servers)
     return servers
 
 def monitor_servers():
