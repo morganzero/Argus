@@ -7,10 +7,15 @@ from flask import Flask, jsonify, render_template
 app = Flask(__name__)
 
 CONFIG_FILE = 'config.json'
+URL_TOKEN_FILE = 'urls_and_tokens.json'
 
 def load_config():
     with open(CONFIG_FILE, 'r') as file:
         return json.load(file)
+
+def save_urls_and_tokens(data):
+    with open(URL_TOKEN_FILE, 'w') as file:
+        json.dump(data, file)
 
 config = load_config()
 
@@ -39,11 +44,12 @@ def fetch_plex_servers():
     for node in config['nodes']:
         if node['local_access']:
             for path in node['paths']:
-                for user_dir in os.listdir(path):
-                    pref_path = os.path.join(path, user_dir, "Library/Application Support/Plex Media Server/Preferences.xml")
-                    if os.path.isfile(pref_path):
-                        url, token = extract_url_token(pref_path, node['ip'])
-                        servers.append({'name': node['name'], 'url': url, 'token': token})
+                if os.path.isdir(path):
+                    for user_dir in os.listdir(path):
+                        pref_path = os.path.join(path, user_dir, "Library/Application Support/Plex Media Server/Preferences.xml")
+                        if os.path.isfile(pref_path):
+                            url, token = extract_url_token(pref_path, node['ip'])
+                            servers.append({'name': node['name'], 'url': url, 'token': token})
         else:
             ssh = ssh_connect(node['ip'], node['port'], config['ssh_user'])
             preferences_files = fetch_preferences_via_ssh(ssh, node['paths'])
@@ -55,6 +61,7 @@ def fetch_plex_servers():
                 url, token = extract_url_token(local_file, node['ip'])
                 servers.append({'name': node['name'], 'url': url, 'token': token})
             ssh.close()
+    save_urls_and_tokens(servers)
     return servers
 
 def monitor_servers():
