@@ -9,6 +9,7 @@ app = Flask(__name__)
 
 CONFIG_FILE = 'config.json'
 PLEX_USERS_FILE = 'plex_users.json'
+PRIVATE_KEY_FILE = '/root/.ssh/id_rsa'  # Path where the key will be mounted in the container
 
 def load_config():
     with open(CONFIG_FILE, 'r') as file:
@@ -24,7 +25,8 @@ config = load_config()
 def ssh_connect(ip, port, user, timeout=30):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(ip, port=port, username=user, timeout=timeout)
+    private_key = paramiko.RSAKey(filename=PRIVATE_KEY_FILE)
+    ssh.connect(ip, port=port, username=user, pkey=private_key, timeout=timeout)
     return ssh
 
 def fetch_preferences_via_ssh(ssh, paths):
