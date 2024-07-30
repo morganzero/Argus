@@ -99,19 +99,20 @@ def monitor_servers():
             transcode = session.transcodeSession
             video_decision = transcode.videoDecision if transcode else 'Direct Play'
             ip_address = session.players[0].address if session.players else 'unknown'
-            media = session.nowPlaying[0]
-            poster_url = plex.transcodeImageUrl(media.thumb, width=200)
-            data.append({
-                'server': server['name'],
-                'user': user,
-                'state': state,
-                'bandwidth': session.bandwidth,
-                'transcode': video_decision,
-                'ip_address': ip_address,
-                'title': media.title,
-                'poster': poster_url,
-                'type': media.type
-            })
+            media = session.video if hasattr(session, 'video') else None
+            if media:
+                poster_url = plex.transcodeImageUrl(media.thumb, width=200)
+                data.append({
+                    'server': server['name'],
+                    'user': user,
+                    'state': state,
+                    'bandwidth': session.bandwidth,
+                    'transcode': video_decision,
+                    'ip_address': ip_address,
+                    'title': media.title,
+                    'poster': poster_url,
+                    'type': media.type
+                })
     return data
 
 @app.route('/monitor')
