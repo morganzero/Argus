@@ -25,8 +25,18 @@ config = load_config()
 def ssh_connect(ip, port, user, timeout=30):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    private_key = paramiko.RSAKey(filename=PRIVATE_KEY_FILE)
-    ssh.connect(ip, port=port, username=user, pkey=private_key, timeout=timeout)
+    try:
+        private_key = paramiko.RSAKey(filename=PRIVATE_KEY_FILE)
+        ssh.connect(ip, port=port, username=user, pkey=private_key, timeout=timeout)
+    except paramiko.ssh_exception.AuthenticationException as e:
+        print(f"Authentication failed: {e}")
+        raise
+    except paramiko.ssh_exception.SSHException as e:
+        print(f"SSH error: {e}")
+        raise
+    except Exception as e:
+        print(f"Exception: {e}")
+        raise
     return ssh
 
 def fetch_preferences_via_ssh(ssh, paths):
