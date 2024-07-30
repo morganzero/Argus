@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM ghcr.io/linuxserver/baseimage-alpine:3.20-d6fdb4e3-ls8
 
 # Set the working directory
 WORKDIR /app
@@ -8,7 +8,10 @@ WORKDIR /app
 COPY . /app
 
 # Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    && pip3 install --no-cache-dir -r requirements.txt
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
