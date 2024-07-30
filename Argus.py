@@ -105,6 +105,7 @@ def monitor_servers():
                 media = session.video if hasattr(session, 'video') else None
                 if media:
                     poster_url = plex.transcodeImageUrl(media.thumb, width=200)
+                    log(f"Session Data: User: {user}, State: {state}, Title: {media.title}, IP: {ip_address}")
                     data.append({
                         'server': server['name'],
                         'user': user,
