@@ -7,8 +7,8 @@ from retrying import retry
 
 app = Flask(__name__)
 
-CONFIG_FILE = '/config/config.json'
-PLEX_USERS_FILE = '/config/plex_users.json'
+CONFIG_FILE = '/app/config.json'
+PLEX_USERS_FILE = '/app/plex_users.json'
 PRIVATE_KEY_FILE = '/root/.ssh/id_rsa'  # Path where the key will be mounted in the container
 
 def load_config():
