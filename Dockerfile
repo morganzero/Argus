@@ -19,4 +19,4 @@ ENV PATH="/app/venv/bin:$PATH"
 EXPOSE 5000
 
 # Run app.py when the container launches
-CMD ["python", "script_name.py"]
+CMD ["python", "Argus.py"]
