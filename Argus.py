@@ -7,8 +7,8 @@ from retrying import retry
 
 app = Flask(__name__)
 
-CONFIG_FILE = 'config.json'
-PLEX_USERS_FILE = 'plex_users.json'
+CONFIG_FILE = '/app/config.json'
+PLEX_USERS_FILE = '/sbx/appdata/argus/plex_users.json'
 PRIVATE_KEY_FILE = '/root/.ssh/id_rsa'  # Path where the key will be mounted in the container
 
 def load_config():
@@ -19,24 +19,17 @@ def save_plex_users(data):
     with open(PLEX_USERS_FILE, 'w') as file:
         json.dump(data, file, indent=4)
 
+def log(message):
+    print(message)
+
 config = load_config()
 
 @retry(stop_max_attempt_number=3, wait_fixed=2000)
 def ssh_connect(ip, port, user, timeout=30):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    try:
-        private_key = paramiko.RSAKey(filename=PRIVATE_KEY_FILE)
-        ssh.connect(ip, port=port, username=user, pkey=private_key, timeout=timeout)
-    except paramiko.ssh_exception.AuthenticationException as e:
-        print(f"Authentication failed: {e}")
-        raise
-    except paramiko.ssh_exception.SSHException as e:
-        print(f"SSH error: {e}")
-        raise
-    except Exception as e:
-        print(f"Exception: {e}")
-        raise
+    private_key = paramiko.RSAKey(filename=PRIVATE_KEY_FILE)
+    ssh.connect(ip, port=port, username=user, pkey=private_key, timeout=timeout)
     return ssh
 
 def fetch_preferences_via_ssh(ssh, paths):
@@ -47,15 +40,20 @@ def fetch_preferences_via_ssh(ssh, paths):
     return preferences
 
 def extract_url_token(preferences_file, node_ip):
-    with open(preferences_file, 'r') as file:
-        content = file.read()
-    token = content.split('PlexOnlineToken="')[1].split('"')[0]
-    port = content.split('ManualPortMappingPort="')[1].split('"')[0]
-    return f"http://{node_ip}:{port}/", token
+    try:
+        with open(preferences_file, 'r') as file:
+            content = file.read()
+        token = content.split('PlexOnlineToken="')[1].split('"')[0]
+        port = content.split('ManualPortMappingPort="')[1].split('"')[0]
+        return f"http://{node_ip}:{port}/", token
+    except Exception as e:
+        log(f"Error extracting URL and token: {e}")
+        return None, None
 
 def fetch_plex_servers():
     servers = []
     for node in config['nodes']:
+        log(f"Processing node: {node['name']} ({node['ip']})")
         if node['local_access']:
             for path in node['paths']:
                 if os.path.isdir(path):
@@ -63,7 +61,8 @@ def fetch_plex_servers():
                         pref_path = os.path.join(path, user_dir, "Library/Application Support/Plex Media Server/Preferences.xml")
                         if os.path.isfile(pref_path):
                             url, token = extract_url_token(pref_path, node['ip'])
-                            servers.append({'name': node['name'], 'url': url, 'token': token})
+                            if url and token:
+                                servers.append({'name': node['name'], 'url': url, 'token': token})
         else:
             ssh = ssh_connect(node['ip'], node['port'], config['SSH_USER'])
             preferences_files = fetch_preferences_via_ssh(ssh, node['paths'])
@@ -73,7 +72,8 @@ def fetch_plex_servers():
                 sftp.get(pref_file, local_file)
                 sftp.close()
                 url, token = extract_url_token(local_file, node['ip'])
-                servers.append({'name': node['name'], 'url': url, 'token': token})
+                if url and token:
+                    servers.append({'name': node['name'], 'url': url, 'token': token})
             ssh.close()
     save_plex_users(servers)
     return servers
@@ -86,7 +86,10 @@ def monitor_servers():
         sessions = plex.sessions()
         for session in sessions:
             user = session.usernames[0]
-            state = session.state
+            try:
+                state = session.state
+            except AttributeError:
+                state = 'unknown'
             transcode = session.transcodeSession
             video_decision = transcode.videoDecision if transcode else 'Direct Play'
             ip_address = session.session.location.ip
