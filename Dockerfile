@@ -19,4 +19,4 @@ ENV PATH="/config/venv/bin:$PATH"
 EXPOSE 5000
 
 # Run Argus.py when the container launches
-CMD ["python", "Argus.py"]
+CMD ["python", "/config/Argus.py"]
