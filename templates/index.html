@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plex Monitor</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Plex Monitor</h1>
+        <div id="content"></div>
+    </div>
+
+    <script>
+        fetch('/monitor')
+            .then(response => response.json())
+            .then(data => {
+                const content = document.getElementById('content');
+                data.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'card mb-3';
+                    card.innerHTML = `
+                        <div class="row no-gutters">
+                            <div class="col-md-4">
+                                <img src="${item.poster}" class="card-img" alt="${item.title}">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h5 class="card-title">${item.title}</h5>
+                                    <p class="card-text">User: ${item.user}</p>
+                                    <p class="card-text">State: ${item.state}</p>
+                                    <p class="card-text">Bandwidth: ${item.bandwidth}</p>
+                                    <p class="card-text">Transcode: ${item.transcode}</p>
+                                    <p class="card-text">IP Address: ${item.ip_address}</p>
+                                    <p class="card-text">Type: ${item.type}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    content.appendChild(card);
+                });
+            });
+    </script>
+</body>
+</html>
