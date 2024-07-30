@@ -88,36 +88,42 @@ def monitor_servers():
     servers = fetch_plex_servers()
     data = []
     for server in servers:
-        plex = PlexServer(server['url'], server['token'])
-        sessions = plex.sessions()
-        for session in sessions:
-            user = session.usernames[0]
-            try:
-                state = session.state
-            except AttributeError:
-                state = 'unknown'
-            transcode = session.transcodeSession
-            video_decision = transcode.videoDecision if transcode else 'Direct Play'
-            ip_address = session.players[0].address if session.players else 'unknown'
-            media = session.video if hasattr(session, 'video') else None
-            if media:
-                poster_url = plex.transcodeImageUrl(media.thumb, width=200)
-                data.append({
-                    'server': server['name'],
-                    'user': user,
-                    'state': state,
-                    'bandwidth': session.bandwidth,
-                    'transcode': video_decision,
-                    'ip_address': ip_address,
-                    'title': media.title,
-                    'poster': poster_url,
-                    'type': media.type
-                })
+        log(f"Connecting to Plex server: {server['url']}")
+        try:
+            plex = PlexServer(server['url'], server['token'])
+            sessions = plex.sessions()
+            log(f"Found {len(sessions)} sessions on {server['name']}")
+            for session in sessions:
+                user = session.usernames[0]
+                try:
+                    state = session.state
+                except AttributeError:
+                    state = 'unknown'
+                transcode = session.transcodeSession
+                video_decision = transcode.videoDecision if transcode else 'Direct Play'
+                ip_address = session.players[0].address if session.players else 'unknown'
+                media = session.video if hasattr(session, 'video') else None
+                if media:
+                    poster_url = plex.transcodeImageUrl(media.thumb, width=200)
+                    data.append({
+                        'server': server['name'],
+                        'user': user,
+                        'state': state,
+                        'bandwidth': session.bandwidth,
+                        'transcode': video_decision,
+                        'ip_address': ip_address,
+                        'title': media.title,
+                        'poster': poster_url,
+                        'type': media.type
+                    })
+        except Exception as e:
+            log(f"Error connecting to Plex server {server['name']}: {e}")
     return data
 
 @app.route('/monitor')
 def monitor():
     data = monitor_servers()
+    log(f"Monitor data: {data}")
     return jsonify(data)
 
 @app.route('/')
