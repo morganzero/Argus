@@ -3,6 +3,7 @@ import json
 import paramiko
 from plexapi.server import PlexServer
 from flask import Flask, jsonify, render_template
+from retrying import retry
 
 app = Flask(__name__)
 
@@ -19,10 +20,11 @@ def save_plex_users(data):
 
 config = load_config()
 
-def ssh_connect(ip, port, user):
+@retry(stop_max_attempt_number=3, wait_fixed=2000)
+def ssh_connect(ip, port, user, timeout=30):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(ip, port=port, username=user)
+    ssh.connect(ip, port=port, username=user, timeout=timeout)
     return ssh
 
 def fetch_preferences_via_ssh(ssh, paths):
