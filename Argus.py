@@ -4,6 +4,8 @@ import paramiko
 from plexapi.server import PlexServer
 from flask import Flask, jsonify, render_template
 from retrying import retry
+import threading
+import time
 import logging
 
 app = Flask(__name__)
@@ -27,6 +29,12 @@ def save_plex_users(data):
     ensure_directory_exists(PLEX_USERS_FILE)
     with open(PLEX_USERS_FILE, 'w') as file:
         json.dump(data, file, indent=4)
+
+def load_plex_users():
+    if os.path.exists(PLEX_USERS_FILE):
+        with open(PLEX_USERS_FILE, 'r') as file:
+            return json.load(file)
+    return []
 
 def log(message):
     print(message)
@@ -122,7 +130,7 @@ def fetch_plex_servers():
     return servers
 
 def monitor_servers():
-    servers = fetch_plex_servers()
+    servers = load_plex_users()  # Read from plex_users.json
     data = []
     for server in servers:
         log(f"Connecting to Plex server: {server['url']}")
@@ -158,6 +166,12 @@ def monitor_servers():
             log(f"Error connecting to Plex server {server['name']}: {e}")
     return data
 
+def update_plex_users():
+    while True:
+        fetch_plex_servers()
+        log("Plex users updated.")
+        time.sleep(1800)  # Update every 30 minutes
+
 @app.route('/monitor')
 def monitor():
     data = monitor_servers()
@@ -169,4 +183,8 @@ def index():
     return render_template('index.html')
 
 if __name__ == "__main__":
+    # Start the background thread for updating Plex users
+    update_thread = threading.Thread(target=update_plex_users, daemon=True)
+    update_thread.start()
+    
     app.run(host='0.0.0.0', port=5000)
