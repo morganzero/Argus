@@ -7,15 +7,21 @@ from retrying import retry
 
 app = Flask(__name__)
 
-CONFIG_FILE = '/app/config.json'
-PLEX_USERS_FILE = '/sbx/appdata/argus/plex_users.json'
+CONFIG_FILE = '/config/config.json'
+PLEX_USERS_FILE = '/config/plex_users.json'
 PRIVATE_KEY_FILE = '/root/.ssh/id_rsa'  # Path where the key will be mounted in the container
 
 def load_config():
     with open(CONFIG_FILE, 'r') as file:
         return json.load(file)
 
+def ensure_directory_exists(filepath):
+    directory = os.path.dirname(filepath)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 def save_plex_users(data):
+    ensure_directory_exists(PLEX_USERS_FILE)
     with open(PLEX_USERS_FILE, 'w') as file:
         json.dump(data, file, indent=4)
 
