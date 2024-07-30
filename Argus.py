@@ -4,12 +4,15 @@ import paramiko
 from plexapi.server import PlexServer
 from flask import Flask, jsonify, render_template
 from retrying import retry
+import logging
 
 app = Flask(__name__)
 
 CONFIG_FILE = '/app/config.json'
 PLEX_USERS_FILE = '/app/plex_users.json'
 PRIVATE_KEY_FILE = '/root/.ssh/id_rsa'  # Path where the key will be mounted in the container
+
+logging.basicConfig(level=logging.INFO)
 
 def load_config():
     with open(CONFIG_FILE, 'r') as file:
@@ -27,6 +30,7 @@ def save_plex_users(data):
 
 def log(message):
     print(message)
+    logging.info(message)
 
 config = load_config()
 
@@ -56,6 +60,36 @@ def extract_url_token(preferences_file, node_ip):
         log(f"Error extracting URL and token: {e}")
         return None, None
 
+def fetch_file_via_sftp(sftp, remote_path, local_path):
+    temp_local_path = local_path + ".tmp"
+    
+    try:
+        logging.info(f"Starting SFTP transfer from {remote_path} to {temp_local_path}")
+        
+        # Fetch remote file size
+        remote_file_size = sftp.stat(remote_path).st_size
+        logging.info(f"Expected remote file size: {remote_file_size}")
+        
+        # Download the file to a temporary location
+        sftp.get(remote_path, temp_local_path)
+        
+        # Verify local file size
+        local_file_size = os.path.getsize(temp_local_path)
+        logging.info(f"Downloaded file size: {local_file_size}")
+        
+        if remote_file_size != local_file_size:
+            raise IOError(f"Size mismatch in get! {remote_file_size} != {local_file_size}")
+        
+        # Rename the temporary file to the final destination
+        os.rename(temp_local_path, local_path)
+        logging.info(f"File transfer completed successfully.")
+        
+    except Exception as e:
+        logging.error(f"File transfer failed: {e}")
+        if os.path.exists(temp_local_path):
+            os.remove(temp_local_path)
+        raise e
+
 def fetch_plex_servers():
     servers = []
     for node in config['nodes']:
@@ -75,7 +109,7 @@ def fetch_plex_servers():
             for pref_file in preferences_files:
                 local_file = os.path.join("/tmp", os.path.basename(pref_file))
                 sftp = ssh.open_sftp()
-                sftp.get(pref_file, local_file)
+                fetch_file_via_sftp(sftp, pref_file, local_file)
                 sftp.close()
                 url, token = extract_url_token(local_file, node['ip'])
                 if url and token:
