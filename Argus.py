@@ -66,6 +66,9 @@ def fetch_file_via_sftp(sftp, remote_path, local_path):
     try:
         logging.info(f"Starting SFTP transfer from {remote_path} to {temp_local_path}")
         
+        # Ensure temporary directory exists
+        ensure_directory_exists(temp_local_path)
+        
         # Fetch remote file size
         remote_file_size = sftp.stat(remote_path).st_size
         logging.info(f"Expected remote file size: {remote_file_size}")
