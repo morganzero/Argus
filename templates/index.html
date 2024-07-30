@@ -51,6 +51,7 @@
         fetch('/monitor')
             .then(response => response.json())
             .then(data => {
+                console.log("Data received from /monitor endpoint:", data);  // Add logging
                 const content = document.getElementById('content');
                 data.forEach(item => {
                     const card = document.createElement('div');
@@ -76,8 +77,10 @@
                     `;
                     content.appendChild(card);
                 });
+            })
+            .catch(error => {
+                console.error("Error fetching data from /monitor endpoint:", error);  // Add error logging
             });
     </script>
 </body>
 </html>
-
