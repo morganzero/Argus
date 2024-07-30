@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Install Python 3 and venv
-RUN apk add --no-cache python3 py3-pip && \
+# Install Python 3, venv, and OpenSSH client
+RUN apk add --no-cache python3 py3-pip openssh && \
     python3 -m venv /app/venv && \
     /app/venv/bin/pip install --no-cache-dir -r requirements.txt
 
