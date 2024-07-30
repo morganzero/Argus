@@ -1,0 +1,26 @@
+{
+  "SSH_USER": "root",
+  "nodes": [
+    {
+      "name": "NODE-1",
+      "ip": "0.0.0.0",
+      "local_access": false,
+      "port": 22,
+      "paths": [
+        "/sbx/appdata/plexcontainers",
+        "/opt/plexdocker/plexconfigs"
+      ]
+    },
+    {
+      "name": "NODE-2",
+      "ip": "0.0.0.0",
+      "local_access": true,
+      "port": 22,
+      "paths": [
+        "/sbx/appdata/plexcontainers",
+        "/opt/plexdocker/plexconfigs"
+      ]
+    }
+    // Add more nodes as needed
+  ]
+}
