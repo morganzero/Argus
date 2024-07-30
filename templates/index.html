@@ -3,84 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Argus Dashboard: Multi-Plex Monitor</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <title>Argus: Multi-Plex Monitor</title>
     <style>
         body {
-            background-color: #1b1b1b;
-            color: #f5f5f5;
+            background-color: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
         }
-        .card {
-            background-color: #2c2c2c;
-            color: #f5f5f5;
-            border: none;
+        .container {
+            width: 80%;
+            margin: auto;
         }
-        .card img {
-            max-height: 150px;
-            object-fit: cover;
+        .header {
+            text-align: center;
+            margin-top: 50px;
         }
-        .card-title, .card-text {
-            color: #f5f5f5;
-        }
-        .section-header {
+        .content {
             margin-top: 30px;
-            margin-bottom: 20px;
-            color: #ff6347;
         }
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: #444;
+        .media {
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        .media img {
+            border-radius: 10px;
+            margin-right: 20px;
+        }
+        .media .details {
+            max-width: 70%;
+        }
+        .media .details p {
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="my-4">Argus: Multi-Plex Monitor</h1>
-        <h2 class="section-header">Now Playing:</h2>
-        <div id="content"></div>
+        <div class="header">
+            <h1>Argus: Multi-Plex Monitor</h1>
+            <h2>Now Playing:</h2>
+        </div>
+        <div class="content" id="content">
+        </div>
     </div>
-
     <script>
-        fetch('/monitor')
-            .then(response => response.json())
-            .then(data => {
-                console.log("Data received from /monitor endpoint:", data);  // Add logging
-                const content = document.getElementById('content');
+        async function fetchData() {
+            const response = await fetch('/monitor');
+            const data = await response.json();
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            if (data.length === 0) {
+                content.innerHTML = '<p>No active sessions found.</p>';
+            } else {
                 data.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'card mb-3';
-                    card.innerHTML = `
-                        <div class="row no-gutters">
-                            <div class="col-md-4">
-                                <img src="${item.poster}" class="card-img" alt="${item.title}">
-                            </div>
-                            <div class="col-md-8">
-                                <div class="card-body">
-                                    <h5 class="card-title">${item.title}</h5>
-                                    <p class="card-text"><strong>User:</strong> ${item.user}</p>
-                                    <p class="card-text"><strong>State:</strong> ${item.state}</p>
-                                    <p class="card-text"><strong>Bandwidth:</strong> ${item.bandwidth}</p>
-                                    <p class="card-text"><strong>Transcode:</strong> ${item.transcode}</p>
-                                    <p class="card-text"><strong>IP Address:</strong> ${item.ip_address}</p>
-                                    <p class="card-text"><strong>Type:</strong> ${item.type}</p>
-                                    <div class="user-avatar">${item.user.charAt(0).toUpperCase()}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    content.appendChild(card);
+                    const mediaDiv = document.createElement('div');
+                    mediaDiv.classList.add('media');
+
+                    const poster = document.createElement('img');
+                    poster.src = item.poster;
+                    poster.alt = item.title;
+
+                    const details = document.createElement('div');
+                    details.classList.add('details');
+
+                    const title = document.createElement('h3');
+                    title.textContent = item.title;
+
+                    const user = document.createElement('p');
+                    user.textContent = `User: ${item.user}`;
+
+                    const state = document.createElement('p');
+                    state.textContent = `State: ${item.state}`;
+
+                    const ip = document.createElement('p');
+                    ip.textContent = `IP Address: ${item.ip_address}`;
+
+                    const transcode = document.createElement('p');
+                    transcode.textContent = `Transcode: ${item.transcode}`;
+
+                    const type = document.createElement('p');
+                    type.textContent = `Type: ${item.type}`;
+
+                    details.appendChild(title);
+                    details.appendChild(user);
+                    details.appendChild(state);
+                    details.appendChild(ip);
+                    details.appendChild(transcode);
+                    details.appendChild(type);
+
+                    mediaDiv.appendChild(poster);
+                    mediaDiv.appendChild(details);
+
+                    content.appendChild(mediaDiv);
                 });
-            })
-            .catch(error => {
-                console.error("Error fetching data from /monitor endpoint:", error);  // Add error logging
-            });
+            }
+        }
+
+        window.onload = fetchData;
+        setInterval(fetchData, 5000); // Refresh every 5 seconds
     </script>
 </body>
 </html>
+
