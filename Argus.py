@@ -141,31 +141,30 @@ def monitor_servers():
             if sessions:
                 log(f"Found {len(sessions)} sessions on {server['name']}")
                 for session in sessions:
-                    try:
-                        user = session.usernames[0]
-                        state = getattr(session, 'state', 'unknown')
-                        transcode = session.transcodeSession
-                        video_decision = transcode.videoDecision if transcode else 'Direct Play'
-                        ip_address = session.players[0].address if session.players else 'unknown'
-                        media = session.video if hasattr(session, 'video') else None
-                        if media:
-                            poster_url = plex.transcodeImageUrl(media.thumb, width=200)
-                            log(f"Appending Session Data: User: {user}, State: {state}, Title: {media.title}, IP: {ip_address}")
-                            data.append({
-                                'server': server['name'],
-                                'user': user,
-                                'state': state,
-                                'bandwidth': session.bandwidth,
-                                'transcode': video_decision,
-                                'ip_address': ip_address,
-                                'title': media.title,
-                                'poster': poster_url,
-                                'type': media.type
-                            })
-                    except Exception as e:
-                        log(f"Error processing session data on {server['name']}: {e}")
-    
-    log(f"Final Monitor Data: {data}")
+                    user = session.usernames[0]
+                    state = getattr(session, 'state', 'unknown')
+                    transcode = session.transcodeSession
+                    video_decision = transcode.videoDecision if transcode else 'Direct Play'
+                    ip_address = session.players[0].address if session.players else 'unknown'
+                    media = session.video if hasattr(session, 'video') else None
+                    if media:
+                        poster_url = plex.transcodeImageUrl(media.thumb, width=200)
+                        log(f"Session Data: User: {user}, State: {state}, Title: {media.title}, IP: {ip_address}")
+                        data.append({
+                            'server': server['name'],
+                            'user': user,
+                            'state': state,
+                            'bandwidth': session.bandwidth,
+                            'transcode': video_decision,
+                            'ip_address': ip_address,
+                            'title': media.title,
+                            'poster': poster_url,
+                            'type': media.type
+                        })
+        except Exception as e:
+            log(f"Error connecting to Plex server {server['name']}: {e}")
+    finally:
+        log(f"Final Monitor Data: {data}")  # Make sure this is outside the try-except structure
     return data
 
 def update_plex_users():
