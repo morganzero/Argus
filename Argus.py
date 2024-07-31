@@ -162,6 +162,7 @@ def monitor_servers():
                                 'poster': poster_url,
                                 'type': media.type
                             })
+                            log(f"Current Data List: {data}")
                     except Exception as e:
                         log(f"Error processing session data: {e}")
         except Exception as e:
