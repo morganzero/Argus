@@ -163,8 +163,8 @@ def monitor_servers():
                         })
         except Exception as e:
             log(f"Error connecting to Plex server {server['name']}: {e}")
-    finally:
-        log(f"Final Monitor Data: {data}")  # This should log the complete data structure
+        finally:
+            log(f"Final Monitor Data: {data}")  # This should log the complete data structure
     return data
 
 def update_plex_users():
